@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import Comment from '../presentation/Comment'
-import superagent from 'superagent'
+import { APIManager } from '../../utils'
 import styles from './styles'
 
 class Comments extends Component {
@@ -9,8 +9,7 @@ class Comments extends Component {
     this.state = {
       comment: {
         username: '',
-        body: '',
-        timestamp: ''
+        body: ''
       },
       list: []
     }
@@ -18,33 +17,45 @@ class Comments extends Component {
 
   componentDidMount(){
     console.log('componentDidMount: Comments')
-    superagent
-    .get('/api/comment/')
-    .query(null)
-    .set('Accept', 'application/javascript')
-    .end((err, response) => {
-      if(err){
-        alert('Error: '+err)
+    APIManager.get('/api/comments', null, (err, response) =>{
+      if(err) {
+        alert('Error: '+err.message)
         return
       }
 
-      console.log(JSON.stringify(response.body))
-      let results = response.body.results
+      console.log('Results: '+JSON.stringify(response.results))
       this.setState({
-          list: results
+          list: response.results
       })
     })
-
   }
 
   submitComment(){
-    console.log('submitComment' +JSON.stringify(this.state.comment))
-    let updatedList = Object.assign([], this.state.list)
-    updatedList.push(this.state.comment)
+    let updatedComment = Object.assign({}, this.state.comment)
+    // Fomatting and subsequent error handling of comments would go here
+    console.log('Updated Comment: '+JSON.stringify(updatedComment))
 
-    this.setState({
-      list: updatedList
+    APIManager.post('/api/comments', updatedComment, (err, response) =>{
+        if(err){
+          alert('Error: '+err.message)
+          return
+        }
+
+        console.log('Comment created: '+JSON.stringify(response))
+        let updatedList = Object.assign([], this.state.list)
+        updatedList.push(response.result)
+        this.setState({
+          list: updatedList
+        })
     })
+
+    // console.log('submitComment' +JSON.stringify(this.state.comment))
+    // let updatedList = Object.assign([], this.state.list)
+    // updatedList.push(this.state.comment)
+    //
+    // this.setState({
+    //   list: updatedList
+    // })
   }
 
   updateUsername(event){
@@ -72,14 +83,7 @@ class Comments extends Component {
     })
   }
 
-  updateTimestamp(event){
-    let updatedComment = Object.assign({}, this.state.comment)
-    updatedComment['timestamp'] = event.target.value
 
-    this.setState({
-      comment: updatedComment
-    })
-  }
 
   render(){
     const listItems = this.state.list.map((comment, i) => {
@@ -98,7 +102,6 @@ class Comments extends Component {
 
           <input onChange={this.updateUsername.bind(this)} className="form-control" type="text" placeholder="Username" /><br />
           <input onChange={this.updateBody.bind(this)} className="form-control" type="text" placeholder="Comment" /><br />
-          <input onChange={this.updateTimestamp.bind(this)} className="form-control" type="text" placeholder="Timestamp" /><br />
           <button onClick={this.submitComment.bind(this)} className="btn btn-info">Submit Comment</button>
         </div>
       </div>

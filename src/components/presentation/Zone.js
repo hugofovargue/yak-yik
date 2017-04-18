@@ -8,7 +8,7 @@ class Zone extends Component {
   */
   render(){
     const zoneStyle = styles.zone
-    const zipCode = this.props.currentZone.zipCodes
+    const zipCode = this.props.currentZone.zipCodes[0]
     /*
       ln11: This line is breaking something when adding a zone.
       something to do with the zipCode array above

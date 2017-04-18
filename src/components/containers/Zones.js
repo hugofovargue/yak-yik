@@ -1,8 +1,7 @@
 import React, { Component } from 'react'
 import Zone from '../presentation/Zone'
-import superagent from 'superagent'
+import { APIManager } from '../../utils'
 import styles from './styles'
-
 
 class Zones extends Component {
   /*
@@ -15,7 +14,7 @@ class Zones extends Component {
     this.state = {
       zone: {
         name:'',
-        zipCodes:[]
+        zipCodes:''
       },
       list: []
     }
@@ -23,39 +22,46 @@ class Zones extends Component {
 
   componentDidMount(){
     console.log('componentDidMount: Zones')
-
-    superagent
-    .get('/api/zone')   // The API get request
-    .query(null)        // This is where the parameters for the request would be made, null if nothing
-    .set('Accept', 'application/json')  // Tells superagent what kind of file to accept
-    .end((err, response) => {    //
+    APIManager.get('/api/zone', null, (err, response) =>{
       if(err) {
-        alert('Error: '+err)
+        alert('Error: '+err.message)
         return
       }
 
-      console.log(JSON.stringify(response.body))
-      let results = response.body.results
+      console.log('Results: '+JSON.stringify(response.results))
       this.setState({
-          list: results
+          list: response.results
       })
     })
   }
 
   addZone(){
     console.log('Add Zone: '+JSON.stringify(this.state.zone))
-    let updatedList = Object.assign([], this.state.list)
-    updatedList.push(this.state.zone)
 
-    this.setState({
-      list: updatedList
+    let updatedZone = Object.assign({}, this.state.zone)
+    updatedZone['zipCodes'] = updatedZone.zipCodes.split(', ')
+    console.log('Add Zone: '+JSON.stringify(updatedZone))
+
+    APIManager.post('/api/zone', updatedZone, (err, response) => {
+      if(err){
+        alert('Error: '+err.message)
+        return
+      }
+
+      console.log('Zone created: '+JSON.stringify(response))
+      let updatedList = Object.assign([], this.state.list)
+      updatedList.push(response.result)
+      /* using the response from a successful post, not just using updatedZone to render new zones */
+      this.setState({
+        list: updatedList
+      })
     })
   }
 
   updateZone(event){
-
     let updatedZone = Object.assign({}, this.state.zone)
     updatedZone[event.target.id] = event.target.value
+    console.log('updatedZone: '+JSON.stringify(updatedZone))
 
     this.setState({
       zone: updatedZone
